@@ -1,15 +1,10 @@
-import datetime
+from datetime import date,datetime
 from flask import Flask, jsonify, request, session
-import time
 from flask_cors import CORS, cross_origin
-import calendar
-from calendar import monthrange
 from pymongo import MongoClient
-import json
-import csv
 import pymongo
 import pandas as pd
-import os
+import json
 
 from functools import wraps
 app = Flask(__name__)
@@ -63,22 +58,49 @@ def do_login_pla():
 @app.route('/file/<name>')
 @login_required
 def process_file(name):
-    print(name)
+    df = pd.read_csv(r"C:\Users\109366\Desktop\TFM codigo\data\\"+name, sep=",",
+                     index_col=None).reset_index()
+    name = name.replace('.csv','').split('_')
+    column_names = df.columns[2:]
+    df = df.iloc[:, :-2]
+    df.columns = column_names
+    df = df[['Passenger_count', 'Trip_distance', 'Fare_amount', 'Total_amount']]
+    test = df.describe()
+    test2 = test['Passenger_count']
+    res = {}
+    res['total_trips'] = test2[0]
+    res['passenger_avg'] = test2[1]
+    res['passenger_std'] = test2[2]
+    res['passenger_min'] = test2[3]
+    res['passenger_max'] = test2[7]
+    test2 = test['Trip_distance']
+    res['Trip_distance_avg'] = test2[1]
+    res['Trip_distance_std'] = test2[2]
+    res['Trip_distance_min'] = test2[3]
+    res['Trip_distance_max'] = test2[7]
+    test2 = test['Fare_amount']
+    res['Fare_amount_avg'] = test2[1]
+    res['Fare_amount_std'] = test2[2]
+    res['Fare_amount_min'] = test2[3]
+    res['Fare_amount_max'] = test2[7]
+    test2 = test['Total_amount']
+    res['Total_amount_avg'] = test2[1]
+    res['Total_amount_std'] = test2[2]
+    res['Total_amount_min'] = test2[3]
+    res['Total_amount_max'] = test2[7]
+    res['car_type'] = name[0]
+    fecha = name[2].split('-')
+    a = datetime(int(fecha[0]),int(fecha[1]),1)
+    a = datetime.timestamp(a)
+    res['timestamp'] = a
+    print(res)
+    print(type(res))
+
     client = get_mongo_client()
     # Issue the serverStatus command and print the results
     mydb = client["NEW_YORK_TAXI"]
     mycol = mydb["month"]
-    res = {}
-    df = pd.read_csv(r"C:\Users\gaizka\Desktop\UNIR\GAIZKA\ASIGNATURAS\2 Semestre\TFM\data\\"+name, sep=',')
-    #print(data.dtypes)
-    #print(df.head(n=10))
-    print(df.describe())
-    #print(data[0])
-    #print(data[1])
-    #print(data['VendorID'])
-    #print(data['Payment_type'])
-    # mean1 = data['Total_amount'].mean()
-    # print(mean1)
+    mycol.insert_one(res)
     #cursor = mycol.find()
     # cursor = mycol.find({"machine_part": "status"}).limit(1).sort("start",pymongo.DESCENDING)
     # for doc in cursor:
@@ -86,7 +108,7 @@ def process_file(name):
     #     res['status'].pop('_id', None)
     #     #respuesta = respuesta.append(res)
     #print respuesta
-    return jsonify(res)
+    return jsonify("Saved")
 
 
 
