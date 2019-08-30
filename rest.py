@@ -86,75 +86,19 @@ def now(date):
     for doc in cursor:
         res['green'] = doc
         res['green'].pop('_id', None)
-        
+
     cursor = mycol.find({"timestamp": fecha, "car_type": "yellow"})
     for doc in cursor:
         res['yellow'] = doc
         res['yellow'].pop('_id', None)
+
+    cursor = mycol.find({"timestamp": fecha, "car_type": "fhv"})
+    for doc in cursor:
+        res['fhv'] = doc
+        res['fhv'].pop('_id', None)
         #respuesta = respuesta.append(res)
     return jsonify(res)
 
-@app.route("/trace/<date>/")
-@login_required
-def get_programs_rest(date):
-    test = [date[i:i + 4] for i in range(0, len(date), 4)]
-    desde = datetime(int(test[0]), 1, 1).timestamp()
-    hasta = datetime(int(test[0])+1, 1, 1).timestamp()
-    vars = request.args.get('vars')
-    var_list = vars.split(',')
-
-    client = get_mongo_client()
-    # Issue the serverStatus command and print the results
-    mydb = client["NEW_YORK_TAXI"]
-    mycol = mydb["month"]
-    # res = {}
-    # for doc in cursor:
-    #     res['green'] = doc
-    #     res['green'].pop('_id', None)
-    #     # respuesta = respuesta.append(res)
-    # return jsonify(res)
-    data_json = []
-    i = 1
-    axis = {}
-
-    for variable in var_list:
-        cursor = mycol.find({'timestamp': {'$gte': desde, '$lte': hasta }},{variable: 1, 'timestamp': 1, "_id": 0}).sort("timestamp",pymongo.DESCENDING)
-        previous_ts= 0
-        res = []
-        for doc in cursor:
-            resp = doc
-            if previous_ts==0:
-                #data = [0, float(resp[variable])]
-                try:
-                    data = [resp['timestamp']*1000, float(resp[variable])]
-                    previous_ts= resp['timestamp']
-                except:
-                    continue
-            else:
-                #data = [resp['start']-previous_ts, float(resp[variable])]
-                try:
-                    data = [resp['timestamp']*1000, float(resp[variable])]
-                except:
-                    continue
-
-            #resp.pop('_id', None)
-            res.append(data)
-
-        # print res
-        res_json = {}
-        res_json['data'] = res
-        res_json['label'] = variable
-        data = variable.split("_")
-        if data[1] in axis:
-            res_json['yaxis'] = axis[data[1]]
-        else:
-            axis[data[1]] = i
-            res_json['yaxis'] = i
-            i = i + 1
-
-        data_json.append(res_json)
-
-    return jsonify(data_json)
 def fhv_file(name):
     df = pd.read_csv(r"C:\Users\109366\Desktop\TFM codigo\data\\fhv\\"+name, sep=",",
                      index_col=None).reset_index()
@@ -165,54 +109,20 @@ def fhv_file(name):
     #df = df[['Passenger_count', 'Trip_distance', 'Fare_amount', 'Total_amount','lpep_pickup_datetime','Lpep_dropoff_datetime']] #old files of green taxi
     #df = df[['passenger_count', 'trip_distance', 'fare_amount', 'total_amount', 'lpep_pickup_datetime',
     #          'lpep_dropoff_datetime']]
-    df = df[['passenger_count', 'trip_distance', 'fare_amount', 'total_amount', 'tpep_pickup_datetime',
-             'tpep_dropoff_datetime']] #para los amarillos
+    df = df[['Pickup_DateTime', 'DropOff_datetime']] #para los amarillos
     #df['Lpep_dropoff_datetime'] = pd.to_datetime(df['Lpep_dropoff_datetime'], format='%Y-%m-%d %H:%M:%S') #old files of green taxi
     #df['Lpep_dropoff_datetime'] = pd.to_datetime(df['lpep_dropoff_datetime'], format='%Y-%m-%d %H:%M:%S')
-    df['Lpep_dropoff_datetime'] = pd.to_datetime(df['tpep_dropoff_datetime'], format='%Y-%m-%d %H:%M:%S')  #para los amarillos
+    df['Lpep_dropoff_datetime'] = pd.to_datetime(df['DropOff_datetime'], format='%Y-%m-%d %H:%M:%S')  #para los amarillos
     #df['lpep_pickup_datetime'] = pd.to_datetime(df['lpep_pickup_datetime'], format='%Y-%m-%d %H:%M:%S')
-    df['lpep_pickup_datetime'] = pd.to_datetime(df['tpep_pickup_datetime'], format='%Y-%m-%d %H:%M:%S') # para los amarilos
+    df['lpep_pickup_datetime'] = pd.to_datetime(df['Pickup_DateTime'], format='%Y-%m-%d %H:%M:%S') # para los amarilos
     df['Total_time'] = df['Lpep_dropoff_datetime'] - df['lpep_pickup_datetime']
     test = df.describe()
-    #test2 = test['Passenger_count'] #old files of green taxi
-    test2 = test['passenger_count']
-    res = {}
-    res['total_trips'] = test2[0]
-    res['passenger_avg'] = test2[1]
-    res['passenger_std'] = test2[2]
-    res['passenger_min'] = test2[3]
-    res['passenger_max'] = test2[7]
-    res['passenger_25'] = test2[4]
-    res['passenger_50'] = test2[5]
-    res['passenger_75'] = test2[6]
-    #test2 = test['Trip_distance'] #old files of green taxi
-    test2 = test['trip_distance']
-    res['Trip_distance_avg'] = test2[1]
-    res['Trip_distance_std'] = test2[2]
-    res['Trip_distance_min'] = test2[3]
-    res['Trip_distance_max'] = test2[7]
-    res['Trip_distance_25'] = test2[4]
-    res['Trip_distance_50'] = test2[5]
-    res['Trip_distance_75'] = test2[6]
-    #test2 = test['Fare_amount'] #old files of green taxi
-    test2 = test['fare_amount']
-    res['Fare_amount_avg'] = test2[1]
-    res['Fare_amount_std'] = test2[2]
-    res['Fare_amount_min'] = test2[3]
-    res['Fare_amount_max'] = test2[7]
-    res['Fare_amount_25'] = test2[4]
-    res['Fare_amount_50'] = test2[5]
-    res['Fare_amount_75'] = test2[6]
-    #test2 = test['Total_amount'] #old files of green taxi
-    test2 = test['total_amount']
-    res['Total_amount_avg'] = test2[1]
-    res['Total_amount_std'] = test2[2]
-    res['Total_amount_min'] = test2[3]
-    res['Total_amount_max'] = test2[7]
-    res['Total_amount_25'] = test2[4]
-    res['Total_amount_50'] = test2[5]
-    res['Total_amount_75'] = test2[6]
     test2 = test['Total_time']
+    res = {}
+    res['total_trips'] = int(test2[0])
+    print(res['total_trips'])
+    print("Rest")
+    print(type(res['total_trips']))
     res['Total_time_avg'] = test2[1] / np.timedelta64(1, 'm')
     res['Total_time_std'] = test2[2] / np.timedelta64(1, 'm')
     res['Total_time_min'] = test2[3] / np.timedelta64(1, 'm')
@@ -230,6 +140,7 @@ def fhv_file(name):
     # Issue the serverStatus command and print the results
     mydb = client["NEW_YORK_TAXI"]
     mycol = mydb["month"]
+    print(res)
     mycol.insert_one(res)
 def green_file(name):
     df = pd.read_csv(r"C:\Users\109366\Desktop\TFM codigo\data\\green\\"+name, sep=",",
@@ -250,7 +161,7 @@ def green_file(name):
     #test2 = test['Passenger_count'] #old files of green taxi
     test2 = test['passenger_count']
     res = {}
-    res['total_trips'] = test2[0]
+    res['total_trips'] = int(test2[0])
     res['passenger_avg'] = test2[1]
     res['passenger_std'] = test2[2]
     res['passenger_min'] = test2[3]
@@ -325,7 +236,7 @@ def yellow_file(name):
     # test2 = test['Passenger_count'] #old files of green taxi
     test2 = test['passenger_count']
     res = {}
-    res['total_trips'] = test2[0]
+    res['total_trips'] = int(test2[0])
     res['passenger_avg'] = test2[1]
     res['passenger_std'] = test2[2]
     res['passenger_min'] = test2[3]
@@ -381,6 +292,68 @@ def yellow_file(name):
     mycol.insert_one(res)
 
     return jsonify("Saved")
+
+@app.route("/car/<period>/<date>/")
+@login_required
+def get_mold_rest(period, date):
+    test = [date[i:i + 4] for i in range(0, len(date), 4)]
+    desde = datetime(int(test[0]), 1, 1).timestamp()
+    hasta = datetime(int(test[0]) + 1, 1, 1).timestamp()
+    vars = request.args.get('vars')
+    mold = request.args.get('car')
+    var_list = vars.split(',')
+    mold_list = mold.split(',')
+    client = get_mongo_client()
+    # Issue the serverStatus command and print the results
+    mydb = client["NEW_YORK_TAXI"]
+    mycol = mydb["month"]
+    data_json = []
+    i = 1
+    axis = {}
+    for car in mold_list:
+        for variable in var_list:
+            cursor = mycol.find({'timestamp': {'$gte': desde, '$lte': hasta}, 'car_type': car},
+                                {variable: 1, 'timestamp': 1, "_id": 0}).sort("timestamp", pymongo.DESCENDING)
+            previous_ts = 0
+            res = []
+            for doc in cursor:
+                resp = doc
+                if previous_ts == 0:
+                    # data = [0, float(resp[variable])]
+                    try:
+                        data = [resp['timestamp'] * 1000, float(resp[variable])]
+                        previous_ts = resp['timestamp']
+                    except:
+                        continue
+                else:
+                    # data = [resp['start']-previous_ts, float(resp[variable])]
+                    try:
+                        data = [resp['timestamp'] * 1000, float(resp[variable])]
+                    except:
+                        continue
+
+                # resp.pop('_id', None)
+                res.append(data)
+
+            # print res
+            print(type(res))
+            if res:
+                res_json = {}
+                res_json['data'] = res
+                res_json['label'] = variable+'_'+car
+                data = variable.split("_")
+                print(data)
+                print(data[0]+data[1])
+                if data[0]+data[1] in axis:
+                    res_json['yaxis'] = axis[data[0]+data[1]]
+                else:
+                    axis[data[0]+data[1]] = i
+                    res_json['yaxis'] = i
+                    i = i + 1
+
+                data_json.append(res_json)
+
+    return jsonify(data_json)
 
 if __name__ == '__main__':
     #app.run(debug=True, host='0.0.0.0')
