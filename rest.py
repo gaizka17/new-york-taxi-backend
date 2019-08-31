@@ -104,41 +104,38 @@ def fhv_file(name):
     df = pd.read_csv(r"C:\Users\109366\Desktop\TFM codigo\data\\fhv\\"+name, sep=",",
                      index_col=None).reset_index()
     name = name.replace('.csv','').split('_')
-    # column_names = df.columns[2:] #old files of green taxi
-    # df = df.iloc[:, :-2] #old files of green taxi
-    # df.columns = column_names #old files of green taxi
-    #df = df[['Passenger_count', 'Trip_distance', 'Fare_amount', 'Total_amount','lpep_pickup_datetime','Lpep_dropoff_datetime']] #old files of green taxi
-    #df = df[['passenger_count', 'trip_distance', 'fare_amount', 'total_amount', 'lpep_pickup_datetime',
-    #          'lpep_dropoff_datetime']]
-    df = df[['Pickup_DateTime', 'DropOff_datetime']] #para los amarillos
-    #df['Lpep_dropoff_datetime'] = pd.to_datetime(df['Lpep_dropoff_datetime'], format='%Y-%m-%d %H:%M:%S') #old files of green taxi
-    #df['Lpep_dropoff_datetime'] = pd.to_datetime(df['lpep_dropoff_datetime'], format='%Y-%m-%d %H:%M:%S')
-    df['Lpep_dropoff_datetime'] = pd.to_datetime(df['DropOff_datetime'], format='%Y-%m-%d %H:%M:%S')  #para los amarillos
-    #df['lpep_pickup_datetime'] = pd.to_datetime(df['lpep_pickup_datetime'], format='%Y-%m-%d %H:%M:%S')
-    df['lpep_pickup_datetime'] = pd.to_datetime(df['Pickup_DateTime'], format='%Y-%m-%d %H:%M:%S') # para los amarilos
+
+    try:
+        df = df[['Pickup_DateTime', 'DropOff_datetime']] #para los amarillos
+        df['Lpep_dropoff_datetime'] = pd.to_datetime(df['DropOff_datetime'], format='%Y-%m-%d %H:%M:%S', errors='coerce')  #para los amarillos
+        df['lpep_pickup_datetime'] = pd.to_datetime(df['Pickup_DateTime'], format='%Y-%m-%d %H:%M:%S', errors='coerce') # para los amarilos
+    except:
+        df = df[['Pickup_date']]  # para los amarillos
+        df['lpep_pickup_datetime'] = pd.to_datetime(df['Pickup_date'], format='%Y-%m-%d %H:%M:%S',
+                                                    errors='coerce')  # para los amarilos
     res = {}
-    #agrupado = df.groupby([df[
-    #                           'lpep_pickup_datetime'].dt.hour]).sum()  # esto te saca datos interesantes, solo te importa passenger y distance
-    # Export = agrupado.to_json(r'C:\Users\109366\Desktop\TFM codigo\data\fhv\Export_DataFrame.json')
-    # with open(os.path.join(r'C:\Users\109366\Desktop\TFM codigo\data\fhv', 'Export_DataFrame.json'), 'r') as f:
-    #     jsonData = json.loads(f.read())
-    #res['agrupado'] = jsonData
+
     agrupado2 = df.groupby([df['lpep_pickup_datetime'].dt.hour]).count()
     Export = agrupado2.to_json(r'C:\Users\109366\Desktop\TFM codigo\data\fhv\Export2_DataFrame.json')
     with open(os.path.join(r'C:\Users\109366\Desktop\TFM codigo\data\fhv', 'Export2_DataFrame.json'), 'r') as f:
         jsonData = json.loads(f.read())
     res['agrupado2'] = jsonData
-    df['Total_time'] = df['Lpep_dropoff_datetime'] - df['lpep_pickup_datetime']
-    test = df.describe()
-    test2 = test['Total_time']
-    res['total_trips'] = int(test2[0])
-    res['Total_time_avg'] = test2[1] / np.timedelta64(1, 'm')
-    res['Total_time_std'] = test2[2] / np.timedelta64(1, 'm')
-    res['Total_time_min'] = test2[3] / np.timedelta64(1, 'm')
-    res['Total_time_max'] = test2[7] / np.timedelta64(1, 'm')
-    res['Total_time_25'] = test2[4] / np.timedelta64(1, 'm')
-    res['Total_time_50'] = test2[5] / np.timedelta64(1, 'm')
-    res['Total_time_75'] = test2[6] / np.timedelta64(1, 'm')
+    count_row = df.shape[0]
+    res['total_trips'] = int(count_row)
+    try:
+        df['Total_time'] = df['Lpep_dropoff_datetime'] - df['lpep_pickup_datetime']
+        test = df.describe()
+        test2 = test['Total_time']
+        #res['total_trips'] = int(test2[0]) #antes contaba asi el total trips
+        res['Total_time_avg'] = test2[1] / np.timedelta64(1, 'm')
+        res['Total_time_std'] = test2[2] / np.timedelta64(1, 'm')
+        res['Total_time_min'] = test2[3] / np.timedelta64(1, 'm')
+        res['Total_time_max'] = test2[7] / np.timedelta64(1, 'm')
+        res['Total_time_25'] = test2[4] / np.timedelta64(1, 'm')
+        res['Total_time_50'] = test2[5] / np.timedelta64(1, 'm')
+        res['Total_time_75'] = test2[6] / np.timedelta64(1, 'm')
+    except:
+        pass
     res['car_type'] = name[0]
     fecha = name[2].split('-')
     a = datetime(int(fecha[0]),int(fecha[1]),1)
