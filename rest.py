@@ -6,6 +6,7 @@ import pymongo
 import pandas as pd
 import json
 import numpy as np
+import os
 
 from functools import wraps
 app = Flask(__name__)
@@ -115,14 +116,22 @@ def fhv_file(name):
     df['Lpep_dropoff_datetime'] = pd.to_datetime(df['DropOff_datetime'], format='%Y-%m-%d %H:%M:%S')  #para los amarillos
     #df['lpep_pickup_datetime'] = pd.to_datetime(df['lpep_pickup_datetime'], format='%Y-%m-%d %H:%M:%S')
     df['lpep_pickup_datetime'] = pd.to_datetime(df['Pickup_DateTime'], format='%Y-%m-%d %H:%M:%S') # para los amarilos
+    res = {}
+    #agrupado = df.groupby([df[
+    #                           'lpep_pickup_datetime'].dt.hour]).sum()  # esto te saca datos interesantes, solo te importa passenger y distance
+    # Export = agrupado.to_json(r'C:\Users\109366\Desktop\TFM codigo\data\fhv\Export_DataFrame.json')
+    # with open(os.path.join(r'C:\Users\109366\Desktop\TFM codigo\data\fhv', 'Export_DataFrame.json'), 'r') as f:
+    #     jsonData = json.loads(f.read())
+    #res['agrupado'] = jsonData
+    agrupado2 = df.groupby([df['lpep_pickup_datetime'].dt.hour]).count()
+    Export = agrupado2.to_json(r'C:\Users\109366\Desktop\TFM codigo\data\fhv\Export2_DataFrame.json')
+    with open(os.path.join(r'C:\Users\109366\Desktop\TFM codigo\data\fhv', 'Export2_DataFrame.json'), 'r') as f:
+        jsonData = json.loads(f.read())
+    res['agrupado2'] = jsonData
     df['Total_time'] = df['Lpep_dropoff_datetime'] - df['lpep_pickup_datetime']
     test = df.describe()
     test2 = test['Total_time']
-    res = {}
     res['total_trips'] = int(test2[0])
-    print(res['total_trips'])
-    print("Rest")
-    print(type(res['total_trips']))
     res['Total_time_avg'] = test2[1] / np.timedelta64(1, 'm')
     res['Total_time_std'] = test2[2] / np.timedelta64(1, 'm')
     res['Total_time_min'] = test2[3] / np.timedelta64(1, 'm')
@@ -140,7 +149,6 @@ def fhv_file(name):
     # Issue the serverStatus command and print the results
     mydb = client["NEW_YORK_TAXI"]
     mycol = mydb["month"]
-    print(res)
     mycol.insert_one(res)
 def green_file(name):
     df = pd.read_csv(r"C:\Users\109366\Desktop\TFM codigo\data\\green\\"+name, sep=",",
@@ -156,11 +164,22 @@ def green_file(name):
     #df['Lpep_dropoff_datetime'] = pd.to_datetime(df['Lpep_dropoff_datetime'], format='%Y-%m-%d %H:%M:%S') #old files of green taxi
     df['Lpep_dropoff_datetime'] = pd.to_datetime(df['lpep_dropoff_datetime'], format='%Y-%m-%d %H:%M:%S')
     df['lpep_pickup_datetime'] = pd.to_datetime(df['lpep_pickup_datetime'], format='%Y-%m-%d %H:%M:%S')
+    res = {}
+    agrupado = df.groupby([df['lpep_pickup_datetime'].dt.hour]).sum() #esto te saca datos interesantes, solo te importa passenger y distance
+    Export = agrupado.to_json(r'C:\Users\109366\Desktop\TFM codigo\data\green\Export_DataFrame.json')
+    with open(os.path.join(r'C:\Users\109366\Desktop\TFM codigo\data\green', 'Export_DataFrame.json'), 'r') as f:
+        jsonData = json.loads(f.read())
+    res['agrupado'] = jsonData
+    agrupado2 = df.groupby([df['lpep_pickup_datetime'].dt.hour]).count()
+    Export = agrupado2.to_json(r'C:\Users\109366\Desktop\TFM codigo\data\green\Export2_DataFrame.json')
+    with open(os.path.join(r'C:\Users\109366\Desktop\TFM codigo\data\green', 'Export2_DataFrame.json'), 'r') as f:
+        jsonData = json.loads(f.read())
+    res['agrupado2'] = jsonData
     df['Total_time'] = df['Lpep_dropoff_datetime'] - df['lpep_pickup_datetime']
     test = df.describe()
     #test2 = test['Passenger_count'] #old files of green taxi
     test2 = test['passenger_count']
-    res = {}
+
     res['total_trips'] = int(test2[0])
     res['passenger_avg'] = test2[1]
     res['passenger_std'] = test2[2]
@@ -231,11 +250,22 @@ def yellow_file(name):
                                                  format='%Y-%m-%d %H:%M:%S')  # para los amarillos
     df['lpep_pickup_datetime'] = pd.to_datetime(df['tpep_pickup_datetime'],
                                                 format='%Y-%m-%d %H:%M:%S')  # para los amarilos
+    res = {}
+    agrupado = df.groupby([df[
+                               'lpep_pickup_datetime'].dt.hour]).sum()  # esto te saca datos interesantes, solo te importa passenger y distance
+    Export = agrupado.to_json(r'C:\Users\109366\Desktop\TFM codigo\data\yellow\Export_DataFrame.json')
+    with open(os.path.join(r'C:\Users\109366\Desktop\TFM codigo\data\yellow', 'Export_DataFrame.json'), 'r') as f:
+        jsonData = json.loads(f.read())
+    res['agrupado'] = jsonData
+    agrupado2 = df.groupby([df['lpep_pickup_datetime'].dt.hour]).count()
+    Export = agrupado2.to_json(r'C:\Users\109366\Desktop\TFM codigo\data\yellow\Export2_DataFrame.json')
+    with open(os.path.join(r'C:\Users\109366\Desktop\TFM codigo\data\yellow', 'Export2_DataFrame.json'), 'r') as f:
+        jsonData = json.loads(f.read())
+    res['agrupado2'] = jsonData
     df['Total_time'] = df['Lpep_dropoff_datetime'] - df['lpep_pickup_datetime']
     test = df.describe()
     # test2 = test['Passenger_count'] #old files of green taxi
     test2 = test['passenger_count']
-    res = {}
     res['total_trips'] = int(test2[0])
     res['passenger_avg'] = test2[1]
     res['passenger_std'] = test2[2]
@@ -312,8 +342,14 @@ def get_mold_rest(period, date):
     axis = {}
     for car in mold_list:
         for variable in var_list:
-            cursor = mycol.find({'timestamp': {'$gte': desde, '$lte': hasta}, 'car_type': car},
-                                {variable: 1, 'timestamp': 1, "_id": 0}).sort("timestamp", pymongo.DESCENDING)
+            if period == "all":
+                test2 = [date[i:i + 2] for i in range(0, len(date), 2)]
+                hasta = datetime(int(test[0]), int(test2[2]), int(test2[3])).timestamp()
+                cursor = mycol.find({'timestamp': {'$gte': 1357002000, '$lte': hasta}, 'car_type': car},
+                                    {variable: 1, 'timestamp': 1, "_id": 0}).sort("timestamp", pymongo.DESCENDING)
+            else:
+                cursor = mycol.find({'timestamp': {'$gte': desde, '$lte': hasta}, 'car_type': car},
+                                    {variable: 1, 'timestamp': 1, "_id": 0}).sort("timestamp", pymongo.DESCENDING)
             previous_ts = 0
             res = []
             for doc in cursor:
@@ -336,14 +372,11 @@ def get_mold_rest(period, date):
                 res.append(data)
 
             # print res
-            print(type(res))
             if res:
                 res_json = {}
                 res_json['data'] = res
                 res_json['label'] = variable+'_'+car
                 data = variable.split("_")
-                print(data)
-                print(data[0]+data[1])
                 if data[0]+data[1] in axis:
                     res_json['yaxis'] = axis[data[0]+data[1]]
                 else:
