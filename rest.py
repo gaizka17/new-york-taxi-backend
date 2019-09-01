@@ -151,16 +151,22 @@ def green_file(name):
     df = pd.read_csv(r"C:\Users\109366\Desktop\TFM codigo\data\\green\\"+name, sep=",",
                      index_col=None).reset_index()
     name = name.replace('.csv','').split('_')
-    # column_names = df.columns[2:] #old files of green taxi
-    # df = df.iloc[:, :-2] #old files of green taxi
-    # df.columns = column_names #old files of green taxi
-    #df = df[['Passenger_count', 'Trip_distance', 'Fare_amount', 'Total_amount','lpep_pickup_datetime','Lpep_dropoff_datetime']] #old files of green taxi
-    df = df[['passenger_count', 'trip_distance', 'fare_amount', 'total_amount', 'lpep_pickup_datetime',
-             'lpep_dropoff_datetime']]
-
-    #df['Lpep_dropoff_datetime'] = pd.to_datetime(df['Lpep_dropoff_datetime'], format='%Y-%m-%d %H:%M:%S') #old files of green taxi
-    df['Lpep_dropoff_datetime'] = pd.to_datetime(df['lpep_dropoff_datetime'], format='%Y-%m-%d %H:%M:%S')
-    df['lpep_pickup_datetime'] = pd.to_datetime(df['lpep_pickup_datetime'], format='%Y-%m-%d %H:%M:%S')
+    try:
+        if df.columns[0]=="level_0": #esto se debe al fichero 2016-07 hasta el 2016-12
+            column_names = df.columns[2:]
+            df = df.iloc[:, :-2]
+            df.columns = column_names
+        df = df[['passenger_count', 'trip_distance', 'fare_amount', 'total_amount', 'lpep_pickup_datetime',
+                 'lpep_dropoff_datetime']]
+        df['Lpep_dropoff_datetime'] = pd.to_datetime(df['lpep_dropoff_datetime'], format='%Y-%m-%d %H:%M:%S', errors='coerce')
+    except:
+        if len(df.columns)>22: #esto se debe a que a partir del 2015-07 se eliminan los extra, pero se mantiene mayuscula
+            column_names = df.columns[2:] #old files of green taxi
+            df = df.iloc[:, :-2] #old files of green taxi
+            df.columns = column_names #old files of green taxi
+        df = df[['Passenger_count', 'Trip_distance', 'Fare_amount', 'Total_amount','lpep_pickup_datetime','Lpep_dropoff_datetime']] #old files of green taxi
+        df['Lpep_dropoff_datetime'] = pd.to_datetime(df['Lpep_dropoff_datetime'], format='%Y-%m-%d %H:%M:%S', errors='coerce') #old files of green taxi
+    df['lpep_pickup_datetime'] = pd.to_datetime(df['lpep_pickup_datetime'], format='%Y-%m-%d %H:%M:%S', errors='coerce')
     res = {}
     agrupado = df.groupby([df['lpep_pickup_datetime'].dt.hour]).sum() #esto te saca datos interesantes, solo te importa passenger y distance
     Export = agrupado.to_json(r'C:\Users\109366\Desktop\TFM codigo\data\green\Export_DataFrame.json')
@@ -174,8 +180,10 @@ def green_file(name):
     res['agrupado2'] = jsonData
     df['Total_time'] = df['Lpep_dropoff_datetime'] - df['lpep_pickup_datetime']
     test = df.describe()
-    #test2 = test['Passenger_count'] #old files of green taxi
-    test2 = test['passenger_count']
+    try:
+        test2 = test['passenger_count']
+    except:
+        test2 = test['Passenger_count']  # old files of green taxi
 
     res['total_trips'] = int(test2[0])
     res['passenger_avg'] = test2[1]
@@ -185,8 +193,11 @@ def green_file(name):
     res['passenger_25'] = test2[4]
     res['passenger_50'] = test2[5]
     res['passenger_75'] = test2[6]
-    #test2 = test['Trip_distance'] #old files of green taxi
-    test2 = test['trip_distance']
+    try:
+        test2 = test['Trip_distance'] #old files of green taxi
+    except:
+        test2 = test['trip_distance']
+
     res['Trip_distance_avg'] = test2[1]
     res['Trip_distance_std'] = test2[2]
     res['Trip_distance_min'] = test2[3]
@@ -194,8 +205,10 @@ def green_file(name):
     res['Trip_distance_25'] = test2[4]
     res['Trip_distance_50'] = test2[5]
     res['Trip_distance_75'] = test2[6]
-    #test2 = test['Fare_amount'] #old files of green taxi
-    test2 = test['fare_amount']
+    try:
+        test2 = test['Fare_amount'] #old files of green taxi
+    except:
+        test2 = test['fare_amount']
     res['Fare_amount_avg'] = test2[1]
     res['Fare_amount_std'] = test2[2]
     res['Fare_amount_min'] = test2[3]
@@ -203,8 +216,10 @@ def green_file(name):
     res['Fare_amount_25'] = test2[4]
     res['Fare_amount_50'] = test2[5]
     res['Fare_amount_75'] = test2[6]
-    #test2 = test['Total_amount'] #old files of green taxi
-    test2 = test['total_amount']
+    try:
+        test2 = test['Total_amount'] #old files of green taxi
+    except:
+        test2 = test['total_amount']
     res['Total_amount_avg'] = test2[1]
     res['Total_amount_std'] = test2[2]
     res['Total_amount_min'] = test2[3]
@@ -236,17 +251,51 @@ def yellow_file(name):
     df = pd.read_csv(r"C:\Users\109366\Desktop\TFM codigo\data\\yellow\\" + name, sep=",",
                      index_col=None).reset_index()
     name = name.replace('.csv', '').split('_')
-    # column_names = df.columns[2:] #old files of green taxi
-    # df = df.iloc[:, :-2] #old files of green taxi
-    # df.columns = column_names #old files of green taxi
-    # df = df[['Passenger_count', 'Trip_distance', 'Fare_amount', 'Total_amount','lpep_pickup_datetime','Lpep_dropoff_datetime']] #old files of green taxi
-    df = df[['passenger_count', 'trip_distance', 'fare_amount', 'total_amount', 'tpep_pickup_datetime',
-             'tpep_dropoff_datetime']]  # para los amarillos
+    try:
+        if df.columns[0]=="level_0": #esto se debe al fichero 2016-07 hasta el 2016-12
+            column_names = df.columns[2:]
+            df = df.iloc[:, :-2]
+            df.columns = column_names
+        df = df[['passenger_count', 'trip_distance', 'fare_amount', 'total_amount', 'tpep_pickup_datetime','tpep_dropoff_datetime']]
+        #df['Lpep_dropoff_datetime'] = pd.to_datetime(df['tpep_dropoff_datetime'], format='%Y-%m-%d %H:%M:%S', errors='coerce')
+    except:
+        print("Estoy en el except")
+        try:
+            df = df[['passenger_count', 'trip_distance', 'fare_amount', 'total_amount', 'pickup_datetime',
+                     'dropoff_datetime']]
+        except:
+            df = df[[' passenger_count',' trip_distance',' fare_amount',' total_amount',' pickup_datetime',' dropoff_datetime']]
+        # if len(df.columns)>22: #esto se debe a que a partir del 2015-07 se eliminan los extra, pero se mantiene mayuscula
+        #     column_names = df.columns[2:] #old files of green taxi
+        #     df = df.iloc[:, :-2] #old files of green taxi
+        #     df.columns = column_names #old files of green taxi
+        # df = df[['Passenger_count', 'Trip_distance', 'Fare_amount', 'Total_amount','Tpep_pickup_datetime','Lpep_dropoff_datetime']] #old files of green taxi
+        # df['Lpep_dropoff_datetime'] = pd.to_datetime(df['Lpep_dropoff_datetime'], format='%Y-%m-%d %H:%M:%S', errors='coerce') #old files of green taxi
+
     # df['Lpep_dropoff_datetime'] = pd.to_datetime(df['Lpep_dropoff_datetime'], format='%Y-%m-%d %H:%M:%S') #old files of green taxi
-    df['Lpep_dropoff_datetime'] = pd.to_datetime(df['tpep_dropoff_datetime'],
-                                                 format='%Y-%m-%d %H:%M:%S')  # para los amarillos
-    df['lpep_pickup_datetime'] = pd.to_datetime(df['tpep_pickup_datetime'],
-                                                format='%Y-%m-%d %H:%M:%S')  # para los amarilos
+    try:
+        try:
+            df['Lpep_dropoff_datetime'] = pd.to_datetime(df['dropoff_datetime'],
+                                                 format='%Y-%m-%d %H:%M:%S', errors='coerce')  # para los amarillos
+        except:
+            df['Lpep_dropoff_datetime'] = pd.to_datetime(df[' dropoff_datetime'],
+                                                         format='%Y-%m-%d %H:%M:%S',
+                                                         errors='coerce')  # para los amarillos
+    except:
+        df['Lpep_dropoff_datetime'] = pd.to_datetime(df['tpep_dropoff_datetime'],
+                                                     format='%Y-%m-%d %H:%M:%S', errors='coerce')  # para los amarillos
+
+    try:
+        try:
+            df['lpep_pickup_datetime'] = pd.to_datetime(df['pickup_datetime'],
+                                                        format='%Y-%m-%d %H:%M:%S',
+                                                        errors='coerce')  # para los amarilos
+        except:
+            df['lpep_pickup_datetime'] = pd.to_datetime(df[' pickup_datetime'],
+                                                format='%Y-%m-%d %H:%M:%S', errors='coerce')  # para los amarilos
+    except:
+        df['lpep_pickup_datetime'] = pd.to_datetime(df['tpep_pickup_datetime'],
+                                                    format='%Y-%m-%d %H:%M:%S', errors='coerce')  # para los amarilos
     res = {}
     agrupado = df.groupby([df[
                                'lpep_pickup_datetime'].dt.hour]).sum()  # esto te saca datos interesantes, solo te importa passenger y distance
@@ -262,7 +311,10 @@ def yellow_file(name):
     df['Total_time'] = df['Lpep_dropoff_datetime'] - df['lpep_pickup_datetime']
     test = df.describe()
     # test2 = test['Passenger_count'] #old files of green taxi
-    test2 = test['passenger_count']
+    try:
+        test2 = test['passenger_count']
+    except:
+        test2 = test[' passenger_count']
     res['total_trips'] = int(test2[0])
     res['passenger_avg'] = test2[1]
     res['passenger_std'] = test2[2]
@@ -272,7 +324,10 @@ def yellow_file(name):
     res['passenger_50'] = test2[5]
     res['passenger_75'] = test2[6]
     # test2 = test['Trip_distance'] #old files of green taxi
-    test2 = test['trip_distance']
+    try:
+        test2 = test['trip_distance']
+    except:
+        test2 = test[' trip_distance']
     res['Trip_distance_avg'] = test2[1]
     res['Trip_distance_std'] = test2[2]
     res['Trip_distance_min'] = test2[3]
@@ -281,7 +336,10 @@ def yellow_file(name):
     res['Trip_distance_50'] = test2[5]
     res['Trip_distance_75'] = test2[6]
     # test2 = test['Fare_amount'] #old files of green taxi
-    test2 = test['fare_amount']
+    try:
+        test2 = test['fare_amount']
+    except:
+        test2 = test[' fare_amount']
     res['Fare_amount_avg'] = test2[1]
     res['Fare_amount_std'] = test2[2]
     res['Fare_amount_min'] = test2[3]
@@ -290,7 +348,10 @@ def yellow_file(name):
     res['Fare_amount_50'] = test2[5]
     res['Fare_amount_75'] = test2[6]
     # test2 = test['Total_amount'] #old files of green taxi
-    test2 = test['total_amount']
+    try:
+        test2 = test['total_amount']
+    except:
+        test2 = test[' total_amount']
     res['Total_amount_avg'] = test2[1]
     res['Total_amount_std'] = test2[2]
     res['Total_amount_min'] = test2[3]
@@ -318,7 +379,7 @@ def yellow_file(name):
     mycol = mydb["month"]
     mycol.insert_one(res)
 
-    return jsonify("Saved")
+    #return jsonify("Saved")
 
 @app.route("/car/<period>/<date>/")
 @login_required
@@ -342,7 +403,7 @@ def get_mold_rest(period, date):
             if period == "all":
                 test2 = [date[i:i + 2] for i in range(0, len(date), 2)]
                 hasta = datetime(int(test[0]), int(test2[2]), int(test2[3])).timestamp()
-                cursor = mycol.find({'timestamp': {'$gte': 1357002000, '$lte': hasta}, 'car_type': car},
+                cursor = mycol.find({'timestamp': {'$gte': 967845536, '$lte': hasta}, 'car_type': car},
                                     {variable: 1, 'timestamp': 1, "_id": 0}).sort("timestamp", pymongo.DESCENDING)
             else:
                 cursor = mycol.find({'timestamp': {'$gte': desde, '$lte': hasta}, 'car_type': car},
@@ -374,10 +435,23 @@ def get_mold_rest(period, date):
                 res_json['data'] = res
                 res_json['label'] = variable+'_'+car
                 data = variable.split("_")
-                if data[0]+data[1] in axis:
-                    res_json['yaxis'] = axis[data[0]+data[1]]
+                #if data[0]+data[1] or data[1] in axis:
+                if data[0]+data[1] in axis or data[1] in axis or data[0] in axis:
+                    if data[1]=="amount" or data[0]=="passenger":
+                        if data[1] == "amount":
+                            res_json['yaxis'] = axis[data[1]]
+                        else:
+                            res_json['yaxis'] = axis[data[0]]
+                    else:
+                        res_json['yaxis'] = axis[data[0]+data[1]]
                 else:
-                    axis[data[0]+data[1]] = i
+                    if data[1] == "amount" or data[0]=="passenger":
+                        if data[1] == "amount":
+                            axis[data[1]] = i
+                        else:
+                            axis[data[0]] = i
+                    else:
+                        axis[data[0] + data[1]] = i
                     res_json['yaxis'] = i
                     i = i + 1
 
