@@ -249,7 +249,7 @@ def green_file(name):
 
 def yellow_file(name):
     df = pd.read_csv(r"C:\Users\109366\Desktop\TFM codigo\data\\yellow\\" + name, sep=",",
-                     index_col=None).reset_index()
+                     index_col=None, error_bad_lines=False).reset_index()
     name = name.replace('.csv', '').split('_')
     try:
         if df.columns[0]=="level_0": #esto se debe al fichero 2016-07 hasta el 2016-12
