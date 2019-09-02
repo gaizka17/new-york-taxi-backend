@@ -264,7 +264,11 @@ def yellow_file(name):
             df = df[['passenger_count', 'trip_distance', 'fare_amount', 'total_amount', 'pickup_datetime',
                      'dropoff_datetime']]
         except:
-            df = df[[' passenger_count',' trip_distance',' fare_amount',' total_amount',' pickup_datetime',' dropoff_datetime']]
+            try:
+                df = df[['Passenger_Count', 'Trip_Distance', 'Fare_Amt', 'Total_Amt', 'Trip_Pickup_DateTime',
+                         'Trip_Dropoff_DateTime']]  # 2009
+            except:
+                df = df[[' passenger_count',' trip_distance',' fare_amount',' total_amount',' pickup_datetime',' dropoff_datetime']]
         # if len(df.columns)>22: #esto se debe a que a partir del 2015-07 se eliminan los extra, pero se mantiene mayuscula
         #     column_names = df.columns[2:] #old files of green taxi
         #     df = df.iloc[:, :-2] #old files of green taxi
@@ -278,7 +282,12 @@ def yellow_file(name):
             df['Lpep_dropoff_datetime'] = pd.to_datetime(df['dropoff_datetime'],
                                                  format='%Y-%m-%d %H:%M:%S', errors='coerce')  # para los amarillos
         except:
-            df['Lpep_dropoff_datetime'] = pd.to_datetime(df[' dropoff_datetime'],
+            try:
+                df['Lpep_dropoff_datetime'] = pd.to_datetime(df['Trip_Dropoff_DateTime'],
+                                                             format='%Y-%m-%d %H:%M:%S',
+                                                             errors='coerce')  # para los amarillos
+            except:
+                df['Lpep_dropoff_datetime'] = pd.to_datetime(df[' dropoff_datetime'],
                                                          format='%Y-%m-%d %H:%M:%S',
                                                          errors='coerce')  # para los amarillos
     except:
@@ -291,8 +300,14 @@ def yellow_file(name):
                                                         format='%Y-%m-%d %H:%M:%S',
                                                         errors='coerce')  # para los amarilos
         except:
-            df['lpep_pickup_datetime'] = pd.to_datetime(df[' pickup_datetime'],
-                                                format='%Y-%m-%d %H:%M:%S', errors='coerce')  # para los amarilos
+            try:
+                df['lpep_pickup_datetime'] = pd.to_datetime(df['Trip_Pickup_DateTime'],
+                                                            format='%Y-%m-%d %H:%M:%S',
+                                                            errors='coerce')  # para los amarilos
+            except:
+                df['lpep_pickup_datetime'] = pd.to_datetime(df[' pickup_datetime'],
+                                                            format='%Y-%m-%d %H:%M:%S',
+                                                            errors='coerce')  # para los amarilos
     except:
         df['lpep_pickup_datetime'] = pd.to_datetime(df['tpep_pickup_datetime'],
                                                     format='%Y-%m-%d %H:%M:%S', errors='coerce')  # para los amarilos
@@ -314,7 +329,10 @@ def yellow_file(name):
     try:
         test2 = test['passenger_count']
     except:
-        test2 = test[' passenger_count']
+        try:
+            test2 = test['Passenger_Count']
+        except:
+            test2 = test[' passenger_count']
     res['total_trips'] = int(test2[0])
     res['passenger_avg'] = test2[1]
     res['passenger_std'] = test2[2]
@@ -327,7 +345,11 @@ def yellow_file(name):
     try:
         test2 = test['trip_distance']
     except:
-        test2 = test[' trip_distance']
+        try:
+            test2 = test['Trip_Distance']
+        except:
+            test2 = test[' trip_distance']
+
     res['Trip_distance_avg'] = test2[1]
     res['Trip_distance_std'] = test2[2]
     res['Trip_distance_min'] = test2[3]
@@ -339,7 +361,10 @@ def yellow_file(name):
     try:
         test2 = test['fare_amount']
     except:
-        test2 = test[' fare_amount']
+        try:
+            test2 = test['Fare_Amt']
+        except:
+            test2 = test[' fare_amount']
     res['Fare_amount_avg'] = test2[1]
     res['Fare_amount_std'] = test2[2]
     res['Fare_amount_min'] = test2[3]
@@ -351,7 +376,10 @@ def yellow_file(name):
     try:
         test2 = test['total_amount']
     except:
-        test2 = test[' total_amount']
+        try:
+            test2 = test['Total_Amt']
+        except:
+            test2 = test[' total_amount']
     res['Total_amount_avg'] = test2[1]
     res['Total_amount_std'] = test2[2]
     res['Total_amount_min'] = test2[3]
