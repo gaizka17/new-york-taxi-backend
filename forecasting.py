@@ -51,6 +51,8 @@ for doc in cursor:
     # resp.pop('_id', None)
     res.append(data)
 
+print(res)
+
 for i in res:
     i[0] = datetime.fromtimestamp(i[0])
 
@@ -58,20 +60,25 @@ df = pd.DataFrame(res)
 df = df.set_index(0)
 df.columns = ["Trips"]
 df.plot()
+print(df)
 #Size of exchange rates
 NumberOfElements = len(df)
 # Create Training and Test
 train = df.Trips[:40]
 test = df.Trips[40:]
 
-# Build Model
-# model = ARIMA(train, order=(3,2,1))
-model = ARIMA(train, order=(5, 1, 1))
+#Build Model
+#model = ARIMA(train, order=(3,2,1))
+model = ARIMA(train, order=(5, 1, 0))
 fitted = model.fit(disp=0)
 
 # Forecast
-fc, se, conf = fitted.forecast(31, alpha=0.05)  # 95% conf
-
+fc, se, conf = fitted.forecast(32, alpha=0.05)  # 95% conf
+print(test.index)
+print(type(test))
+nueva = pd.Series([0],index=['2019-07-01'])
+test = test.append(nueva)
+print(test.shape)
 # Make as pandas series
 fc_series = pd.Series(fc, index=test.index)
 lower_series = pd.Series(conf[:, 0], index=test.index)
@@ -87,3 +94,30 @@ plt.fill_between(lower_series.index, lower_series, upper_series,
 plt.title('Forecast vs Actuals')
 plt.legend(loc='upper left', fontsize=8)
 plt.show()
+
+
+def parser(x):
+    return datetime.strptime('190' + x, '%Y-%m')
+
+
+series = read_csv('shampoo-sales.csv', header=0, parse_dates=[0], index_col=0, squeeze=True, date_parser=parser)
+X = df.values
+size = int(len(X) * 0.66)
+train, test = X[0:size], X[size:len(X)]
+history = [x for x in train]
+predictions = list()
+for t in range(len(test)):
+    model = ARIMA(history, order=(5, 1, 0))
+    model_fit = model.fit(disp=0)
+    output = model_fit.forecast()
+    yhat = output[0]
+    predictions.append(yhat)
+    obs = test[t]
+    history.append(obs)
+    print('predicted=%f, expected=%f' % (yhat, obs))
+error = mean_squared_error(test, predictions)
+print('Test MSE: %.3f' % error)
+# plot
+pyplot.plot(test)
+pyplot.plot(predictions, color='red')
+pyplot.show()
